@@ -1,0 +1,795 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="icon" type="images/png" sizes="16x16" href="https://upload.cc/i1/2019/03/03/xyKiIo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <title>Theater</title>
+</head>
+
+<body>
+  <div id="app">
+    <div class="loading-page">
+      <div class="animation">
+        <div class="loading-page-animation-all">
+          <div class="loading-page-animation-top">
+            <div class="top-bgc"></div>
+          </div>
+          <div class="loading-page-animation-middle"></div>
+          <div class="loading-page-animation-bottom"></div>
+        </div>
+      </div>
+      <h3 class="loading-text">Movie Loading</h3>
+      <div class="loading-bar-box">
+        <div class="loading-bar"></div>
+      </div>
+      <div class="loading-second"></div>
+      <button @click="movieStart()" class="loading-page-btn">Start</button>
+    </div>
+    <div class="apptitle">Holiday Movie</div>
+    <div class="movie" @wheel.prevent="wheel">
+      <div class="cards" :class="{isCartOpen: isCartOpen}">
+        <div class="card" v-for="(movie,id) in movies" :key="id">
+          <div class="sale-box"></div>
+          <div class="left">
+            <a :href="movie.iframe" target="_blank">
+              <div class="cover" :style="bgImg(movie.imgUrl)"> </div>
+            </a>
+          </div>
+          <div class="right">
+            <h2>{{movie.name}}</h2>
+            <h4>{{movie.description.slice(0,120)}}....</h4>
+            <div class="bottom-box">
+              <div class="price">＄{{movie.price}}</div>
+              <div class="btn-box">
+                <i class="star starshow fa fa-star" @click="starShow(movie,$event)" v-if="movie.starshow"></i>
+                <i class="star fa fa-star" @click="starShow(movie,$event)" v-else></i>
+                <div class="addBtn" @click="addtoCart(movie,$event)">+Add to Cart</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="buybox" :style="bgImg(currentMovie.imgUrl)" v-if="currentMovie"></div>
+      <i class="starbox fa fa-star"></i>
+      <div class="starbox-fixed" @click="isFavoriteOpen=!isFavoriteOpen">
+        <div class="fa fa-star"><span> {{ favorite.length }} </span></div>
+      </div>
+      <div class="favorite-control" :class="{isFavoriteOpen: isFavoriteOpen}">
+        <div class="favorite-panel">
+          <div class="fav-title">My Favorite Movie</div>
+          <ul>
+            <li v-for="(movie,id) in favorite">
+              <div class="thumbnail" :style="bgImg(movie.imgUrl)"></div>
+              <h4> {{movie.name}} </h4>
+              <p> {{ movie.description.slice(0,26) }}... </p>
+              <div class="fav-remove" @click="favorite.splice(id,1)">-</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="fixed-control" @click="isCartOpen=!isCartOpen"><i
+          class="fa fa-shopping-cart fa-2x"></i><span>{{cart.length}}</span></div>
+      <div class="cart-control" :class="{isCartOpen: isCartOpen}">
+        <div class="cart-panel">
+          <div class="cart-title">My Movie Cart</div>
+          <ul>
+            <li v-for="(movie,id) in cart">
+              <div class="thumbnail" :style="bgImg(movie.imgUrl)"></div>
+              <h4><span>{{movie.name}}</span>
+                <p>{{movie.description.slice(0,60)}}...</p>
+                <div class="price">{{movie.price}}$</div>
+                <div class="remove fa fa-trash-o" @click="cart.splice(id,1)"></div>
+              </h4>
+            </li>
+            <li v-if="!cart.length">
+              <h3>Your cart is empty !!</h3>
+            </li>
+          </ul>
+          <hr />
+          <h2>Total：{{totalPrice}}$</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.7/vue.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.0.2/TweenMax.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</body>
+
+</html>
+<style>
+  /* global-scope */
+  * {
+    vertical-align: center;
+    list-style: none;
+  }
+
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    font-family: "Roboto", sans-serif;
+  }
+
+  #app {
+    width: 100%;
+    height: 100%;
+    background-color: #302929;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .apptitle {
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    color: white;
+    opacity: 0.7;
+    font-size: 25px;
+    font-weight: bold;
+  }
+
+
+  /* loading-scope */
+  .loading-page {
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    z-index: 10000;
+    background-color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    transition: 1.5s 0.5s;
+  }
+
+  .loading-page-animation-all {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @keyframes bgcolor {
+    0% {
+      background-color: #fff;
+    }
+
+    50% {
+      background-color: rgb(62, 131, 235);
+    }
+
+    100% {
+      background-color: rgb(248, 86, 86);
+    }
+  }
+
+  @keyframes moviejump {
+
+    0%,
+    50% {
+      transform: translateY(0px);
+    }
+
+    80%,
+    100% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .loading-page-animation-top {
+    width: 120px;
+    height: 50px;
+    background-color: #fff;
+    border: 3px solid gray;
+  }
+
+  .top-bgc {
+    width: 100%;
+    height: 100%;
+    background-color: rgb(198, 209, 214);
+  }
+
+  .loading-page-animation-middle {
+    width: 2px;
+    height: 16px;
+    background-color: #fff;
+    margin-bottom: 10px;
+  }
+
+  .loading-page-animation-bottom {
+    width: 100px;
+    height: 2px;
+    margin-top: -10px;
+    background-color: #fff;
+  }
+
+  .loading-page.movie-page {
+    opacity: 0;
+    z-index: 1;
+  }
+
+  .loading-page.movie-page .loading-page-animation-all {
+    transform: scale(0);
+    transition: 0.5s
+  }
+
+  .loading-text {
+    color: white;
+    font-size: 20px;
+  }
+
+  .loading-page-btn {
+    padding: 5px 10px;
+    outline: none;
+    border-radius: 10px;
+    margin-top: 16px;
+    background-color: #ffffff;
+    transition: 0.5s
+  }
+
+  .loading-page-btn:hover {
+    background-color: rgb(248, 77, 64);
+    color: #ffffff;
+  }
+
+  .loading-bar-box {
+    width: 200px;
+    height: 8px;
+    background-color: white;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
+  .loading-bar {
+    height: 100%;
+    width: 0%;
+    background-color: rgb(248, 77, 64);
+  }
+
+  /* ------------------------- */
+
+
+  /* star-box-scope */
+  .star {
+    cursor: pointer;
+  }
+
+  .starbox {
+    position: fixed;
+    right: 80px;
+    bottom: 15px;
+    color: #ffffff;
+    font-size: 20px;
+    opacity: 0;
+  }
+
+  .starbox-fixed {
+    position: fixed;
+    right: 80px;
+    bottom: 15px;
+    color: #ffffff;
+    cursor: pointer;
+    position: fixed;
+    z-index: 10;
+    font-size: 22px;
+    opacity: 1;
+  }
+
+  .starbox-fixed span {
+    font-size: 14px;
+    color: #fff;
+  }
+
+  .starbox-fixed:hover {
+    transition: 0.5s;
+    color: rgb(247, 44, 44);
+  }
+
+  .favorite-control {
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    color: #ffffff;
+    opacity: 0;
+    transition: 1s;
+    pointer-events: none;
+    background-image: linear-gradient(20deg, rgb(12, 12, 11) 0%, rgb(46, 45, 43) 50%, rgb(245, 172, 63) 75%, transparent 100%);
+  }
+
+  .favorite-control.isFavoriteOpen {
+    opacity: 1;
+    pointer-events: initial;
+  }
+
+  .fav-remove {
+    width: 40px;
+    height: 18px;
+    font-size: 14px;
+    border-radius: 8px;
+    color: black;
+    background-color: #ffffff;
+    transition: 0.5s;
+    text-align: center;
+  }
+
+  .fav-remove:hover {
+    background-color: rgb(243, 52, 52);
+    color: #ffffff;
+    transform: translateY(-3px);
+    cursor: pointer;
+  }
+
+  .fav-title {
+    font-size: 24px;
+    text-align: center;
+    position: relative;
+    top: -50px;
+  }
+
+  .favorite-panel li {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 30px;
+    transition: 0.5s;
+    margin-bottom: 10px;
+  }
+
+  .favorite-panel li:hover {
+    cursor: pointer;
+    background-color: rgb(24, 23, 23);
+    border-radius: 5px;
+    transform: translateY(-5px);
+  }
+
+  .favorite-control ul li .thumbnail {
+    width: 80px;
+    height: 110px;
+    display: inline-block;
+    margin-right: 20px;
+  }
+
+  /* cart-control-scope */
+  .fixed-control {
+    color: white;
+    bottom: 10px;
+    right: 10px;
+    position: fixed;
+    cursor: pointer;
+    z-index: 10;
+    transition: 0.5s;
+    z-index: 1000;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: 0.5s;
+  }
+
+  .fixed-control span {
+    margin-left: 5px;
+    font-size: 14px;
+    color: white;
+  }
+
+  .fixed-control:hover {
+    color: rgb(243, 197, 44);
+  }
+
+  .buybox {
+    width: 40px;
+    height: 50px;
+    background-color: #fff;
+    position: fixed;
+    right: 0px;
+    bottom: 0px;
+    opacity: 0;
+  }
+
+  .cart-control {
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #eee;
+    background-image: linear-gradient(10deg, #111 0%, #111 50%, #111 75%, transparent 100%);
+    box-sizing: border-box;
+    padding: 5vw;
+    transition: 0.5s;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .cart-control h2 {
+    text-align: right;
+  }
+
+  .cart-control.isCartOpen {
+    opacity: 1;
+    pointer-events: initial;
+  }
+
+  .cart-control .cart-panel {
+    width: 70%;
+    height: auto;
+    display: inline-block;
+    justify-content: center;
+    align-items: start;
+  }
+
+  .cart-control .cart-title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  h4>span {
+    font-weight: bold;
+    font-size: 22px;
+  }
+
+  .cart-control ul {
+    list-style: none;
+  }
+
+  .cart-control ul li {
+    display: flex;
+    padding: 5px 10px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    transition: 0.5s;
+  }
+
+  .cart-control ul li:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    border-radius: 5px;
+    -webkit-transform: translateY(-10px);
+    transform: translateY(-10px);
+  }
+
+  .cart-control ul li h4 {
+    font-size: 17px;
+    font-weight: normal;
+    display: inline-block;
+    width: 100%;
+    opacity: 0.8;
+  }
+
+  .cart-control ul li h4 .price {
+    float: right;
+    margin-left: 30px;
+  }
+
+  .cart-control ul li h4 .remove {
+    float: right;
+    display: inline-block;
+    padding: 4px 15px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 50px;
+    margin-left: 10px;
+    font-size: 15px;
+  }
+
+  .cart-control ul li h4 .remove:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #f92222;
+    transition: 0.5s;
+  }
+
+  .cart-control ul li .thumbnail {
+    width: 110px;
+    height: 130px;
+    display: inline-block;
+    margin-right: 20px;
+  }
+
+  /* ------------------------------- */
+
+
+  /* movie and card-scope */
+  .movie {
+    flex: 1;
+    z-index: 100;
+  }
+
+  .cards {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    margin-left: 20vw;
+    margin-right: 20vw;
+    justify-content: left;
+    position: relative;
+    left: 0px;
+    transition: 0.5s, left 0s;
+  }
+
+  .cards.isCartOpen {
+    -webkit-transform: scale(0.8);
+    transform: scale(0.8);
+  }
+
+  .cards .card {
+    padding: 15px;
+    border-radius: 5px;
+    margin: 60px;
+    width: 460px;
+    height: auto;
+    display: inline-flex;
+    background-color: rgba(255, 255, 255, 0.7);
+    transition: 0.5s;
+    position: relative;
+  }
+
+  .cards .card:before {
+    content: "";
+    width: 60px;
+    height: 12px;
+    background-color: #f23030;
+    border-radius: 2px;
+    position: absolute;
+    right: -18px;
+    top: 10px;
+  }
+
+  .cards .card:hover {
+    -webkit-transform: translateY(-5px);
+    transform: translateY(-5px);
+    background-color: #f9f7f7;
+  }
+
+  .cards .card:hover .left .cover {
+    -webkit-transform: translateY(-5px);
+    transform: translateY(-10px);
+  }
+
+  .cards .card .left {
+    flex: 1;
+    margin-bottom: -10px;
+  }
+
+  .cards .card .left .cover {
+    width: 180px;
+    height: 240px;
+    border-radius: 5px;
+    position: relative;
+    top: -40px;
+    cursor: pointer;
+    transition: 0.5s 0.1s;
+  }
+
+  .cards .card .right {
+    padding-left: 10px;
+  }
+
+  .cards .card .right h2 {
+    color: rgba(0, 0, 0, 0.7);
+    text-align: center;
+  }
+
+  .cards .card .right h4 {
+    color: rgba(45, 44, 44, 0.6);
+    letter-spacing: 1px;
+  }
+
+  .cards .card .right .bottom-box {
+    display: flex;
+  }
+
+  .cards .card .right .bottom-box .price {
+    color: rgba(0, 0, 0, 0.5);
+    font-weight: bold;
+  }
+
+  .cards .card .right .bottom-box .btn-box {
+    display: flex;
+    margin-left: 100px;
+  }
+
+  .cards .card .right .bottom-box .btn-box .star {
+    margin-right: 10px;
+    margin-left: -20px;
+    margin-top: 5px;
+    width: 10px;
+    height: 10px;
+    color: gray;
+    transition: 0.5s;
+  }
+
+  .cards .card .right .bottom-box .btn-box .star.starshow {
+    color: rgba(250, 45, 45, 0.8);
+  }
+
+  .cards .card .right .bottom-box .btn-box .addBtn {
+    margin-left: 10px;
+    font-size: 12px;
+    outline: none;
+    padding: 6px 14px;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: rgba(255, 255, 255, 0.7);
+    transition: 0.5s;
+    font-weight: bold;
+  }
+
+  .cards .card .right .bottom-box .btn-box .addBtn:hover {
+    -webkit-transform: scale(1.1);
+    transform: scale(1.1);
+    cursor: pointer;
+    color: rgba(255, 148, 99, 0.9);
+  }
+</style>
+
+<script>
+  var vm = new Vue({
+    el: "#app",
+    data: {
+      starshow: false,
+      currentMovie: null,
+      favorite: [],
+      cart: [],
+      isCartOpen: false,
+      isFavoriteOpen: false,
+      time: 0,
+      movies: [
+        {
+          name: "ALITA: BATTLE ANGEL",
+          imgUrl: "https://resizing.flixster.com/32Kpcr4l9YiECA8Xs7giA0GdH1o=/fit-in/200x296.2962962962963/v1.bTsxMjk4NTcxOTtqOzE4MDE1OzEyMDA7NDA1MDs2MDAw",
+          price: 450,
+          description: "Alita: Battle Angel's story struggles to keep up with its special effects, but fans of futuristic sci-fi action may still find themselves more than sufficiently entertained.",
+          starshow: false,
+          iframe: "http://player.theplatform.com/p/dCK2IC/X36SYnM49ldh/select/media/guid/2474312077/5CE23259-5A0D-47FF-A435-8DE6789CADE3?ec=f&isEmbedded=true",
+        },
+        {
+          name: "A STAR IS BORN",
+          imgUrl: "https://resizing.flixster.com/EUQIdJ0StF9oOdhbDjTQMOB4d-0=/fit-in/200x296.2962962962963/v1.bTsxMjc2MTM0NTtqOzE4MDEyOzEyMDA7NTA5Ozc1NQ",
+          price: 400,
+          description: "With appealing leads, deft direction, and an affecting love story, A Star Is Born is a remake done right -- and a reminder that some stories can be just as effective in the retelling.",
+          starshow: false,
+          iframe: "http://player.theplatform.com/p/dCK2IC/X36SYnM49ldh/select/media/guid/2474312077/1002373E-1310-4374-843E-01F427D86B17?ec=f&isEmbedded=true",
+        },
+        {
+          name: "AQUAMAN",
+          imgUrl: "https://resizing.flixster.com/pK5PcN_LA4JFB4sMf0snwt41frA=/fit-in/200x296.2962962962963/v1.bTsxMjkzMjYxNTtqOzE4MDE0OzEyMDA7Mjc2NDs0MDk2",
+          price: 420,
+          description: "Aquaman swims with its entertainingly ludicrous tide, offering up CGI superhero spectacle that delivers energetic action with an emphasis on good old-fashioned fun.",
+          starshow: false,
+          iframe: "http://player.theplatform.com/p/dCK2IC/X36SYnM49ldh/select/media/guid/2474312077/A6D60FE7-29F7-46D2-A4B9-EBD38C6B7D77?ec=f&isEmbedded=true",
+        },
+        {
+          name: "GREEN BOOK",
+          imgUrl: "https://resizing.flixster.com/LGVhNP-EuLyALbeN5OCKnugaqhk=/fit-in/200x296.2962962962963/v1.bTsxMjgyMzMzODtqOzE4MDEzOzEyMDA7MzE1ODs1MDAw",
+          price: 480,
+          description: "Green Book takes audiences on a surprisingly smooth ride through potentially bumpy subject matter, fueled by Peter Farrelly's deft touch and a pair of well-matched leads.",
+          starshow: false,
+          iframe: "http://player.theplatform.com/p/dCK2IC/X36SYnM49ldh/select/media/guid/2474312077/4FF56B8A-11B6-4F02-A33D-62914CC77ABD?ec=f&isEmbedded=true",
+        },
+        {
+          name: "A DOG'S WAY HOME",
+          imgUrl: "https://resizing.flixster.com/gGTR1geXOxlmVQlxWZXUI4dSFMI=/fit-in/200x296.2962962962963/v1.bTsxMjg3NzEzMztqOzE4MDE0OzEyMDA7NjA3Mjs5MDAw",
+          price: 400,
+          description: "A Dog's Way Home may not quite be a family-friendly animal drama fan's best friend, but this canine adventure is no less heartwarming for its familiarity.",
+          starshow: false,
+          iframe: "http://player.theplatform.com/p/dCK2IC/X36SYnM49ldh/select/media/guid/2474312077/3D894C2C-2D26-4982-B31E-709A4004DEA1?ec=f&isEmbedded=true",
+        },
+        {
+          name: "THE UPSIDE",
+          imgUrl: "https://resizing.flixster.com/zyS7-MLOcPyGMJNC-nre0nmZLtY=/fit-in/200x296.2962962962963/v1.bTsxMjg2ODY4MTtqOzE4MDEzOzEyMDA7ODAwOzExODU",
+          price: 400,
+          description: "Preachy, manipulative, and frustratingly clichéd, The Upside showcases Bryan Cranston and Kevin Hart's chemistry without ever taking full advantage of it.",
+          starshow: false,
+          iframe: "http://player.theplatform.com/p/dCK2IC/X36SYnM49ldh/select/media/guid/2474312077/82D004A7-2A15-41B4-8E23-643BC9F191DF?ec=f&isEmbedded=true",
+        },
+      ]
+    },
+    methods: {
+      bgImg(url) {
+        return {
+          "background-position": "center center",
+          "background-size": "cover",
+          "background-image": "url(" + url + ")"
+        }
+      },
+      addtoCart(movie, evt) {
+        this.currentMovie = movie
+        console.log(evt)
+        let target = evt.target
+        this.$nextTick(() => {
+          TweenMax.from('.buybox', 0.8, {
+            left: $(target).offset().left,
+            top: $(target).offset().top,
+            opacity: 1,
+            ease: Power1.easeOut,
+          })
+          setTimeout(() => {
+            this.cart.push(movie)
+          }, 800)
+        })
+        console.log(this.cart.length)
+      },
+
+      wheel(evt) {
+        TweenMax.to(".cards", 0.8, {
+          left: "+=" + evt.deltaY * 2.5 + "px"
+        })
+      },
+      starShow(movie, evt) {
+        let star = movie.starshow = !movie.starshow
+        let target = evt.target
+        this.currentMovie = movie
+        console.log(star)
+        if (movie.starshow) {
+          this.$nextTick(() => {
+            TweenMax.from('.starbox', 0.8, {
+              left: $(target).offset().left,
+              top: $(target).offset().top,
+              opacity: 1,
+              color: "rgba(250, 45, 45, 0.8)",
+              ease: Power1.easeIn,
+            })
+            setTimeout(() => {
+              this.favorite.push(movie)
+            }, 600)
+          })
+          console.log(this.favorite.length)
+        }
+      },
+      movieStart() {
+        let _this = this
+        var loadTimer = setInterval(() => {
+          $('.loading-bar').css('width', _this.time + '%')
+          _this.time += 1
+          $('.loading-text').text(_this.time)
+          $('.animation').css({ 'animation': 'moviejump 0.8s infinite alternate' })
+          $('.top-bgc').css({ 'animation': 'bgcolor 3s infinite alternate' })
+          if (_this.time >= 100) {
+            clearInterval(loadTimer)
+            $('.loading-page').addClass('movie-page')
+          }
+        }, 1000 / 30)
+      }
+    },
+    mounted: {
+
+    },
+    created: {
+
+    },
+    watch: {
+      cart() {
+        TweenMax.from(".fa-shopping-cart", 0.3, {
+          scale: 0.5
+        })
+      },
+      favorite() {
+        TweenMax.from('.fa-star', 1, {
+          scale: 1.5
+        })
+      },
+    },
+    computed: {
+      totalPrice() {
+        return this.cart.map(movie => movie.price).reduce((total, p) => total + p, 0)
+      }
+    }
+  })
+
+</script>
